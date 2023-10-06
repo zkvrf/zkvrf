@@ -1,0 +1,7 @@
+[package]
+name = "zkvrf_pkc_scheme"
+type = "bin"
+authors = ["kevincharm <k@fairy.dev>"]
+compiler_version = "0.10.5"
+
+[dependencies]
