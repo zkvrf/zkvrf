@@ -66,6 +66,31 @@ contract ZKVRF {
         operators.add(publicKey);
     }
 
+    function getOperatorsCount() external view returns (uint256) {
+        return operators.size;
+    }
+
+    /// @notice Get a paginated list of operators
+    /// @param lastOperator Start fetching operators beginning from the
+    ///     operator up NEXT after `lastOperator`. To start fetching from
+    ///     the beginning, use bytes32(0)
+    /// @param maxPageSize Maximum number of operators to fetch
+    function getOperators(
+        bytes32 lastOperator,
+        uint256 maxPageSize
+    ) external view returns (bytes32[] memory out) {
+        Sets.Set storage set = operators;
+        uint256 len = set.size;
+
+        uint256 pageSize = maxPageSize > len ? len : maxPageSize;
+        out = new bytes32[](pageSize);
+        bytes32 element = lastOperator == 0 ? set.tail() : lastOperator;
+        for (uint256 i = 0; i < pageSize; ++i) {
+            out[i] = element;
+            element = set.prev(element);
+        }
+    }
+
     function requestRandomness(
         bytes32 operatorPublicKey,
         uint16 minBlockConfirmations,

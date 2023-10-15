@@ -169,6 +169,43 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "lastOperator",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxPageSize",
+        "type": "uint256"
+      }
+    ],
+    "name": "getOperators",
+    "outputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "out",
+        "type": "bytes32[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getOperatorsCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "nextRequestId",
     "outputs": [
