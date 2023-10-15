@@ -44,7 +44,8 @@ contract ZKVRF {
         uint256 indexed requestId,
         bytes32 indexed operatorPublicKey,
         address indexed requester,
-        uint256 minBlockConfirmations,
+        uint16 minBlockConfirmations,
+        uint32 callbackGasLimit,
         uint256 nonce
     );
     event RandomnessFulfilled(
@@ -73,7 +74,7 @@ contract ZKVRF {
         require(operators.has(operatorPublicKey), "Unknown operator");
 
         requestId = nextRequestId++;
-        uint256 nonce = requestNonces[msg.sender];
+        uint256 nonce = requestNonces[msg.sender]++;
 
         requests[requestId] = keccak256(
             abi.encode(
@@ -91,6 +92,7 @@ contract ZKVRF {
             operatorPublicKey,
             msg.sender,
             minBlockConfirmations,
+            callbackGasLimit,
             nonce
         );
     }
