@@ -25,6 +25,10 @@ contract ZKVRF {
         uint256 nonce;
     }
 
+    /// @notice BN254 field prime
+    uint256 public constant P =
+        21888242871839275222246405745257275088696311157297823662689037894645226208583;
+
     /// @notice SNARK verifier contract
     address public immutable verifier;
     /// @notice Where we get da hashes from
@@ -122,6 +126,21 @@ contract ZKVRF {
         );
     }
 
+    /// @notice Repeatedly hash a VRF seed until it lies within the BN254 field prime
+    function hashSeedToField(
+        address requester,
+        bytes32 blockHash,
+        uint256 nonce
+    ) public pure returns (bytes32 hash) {
+        hash = keccak256(abi.encode(requester, blockHash, nonce));
+        for (;;) {
+            hash = keccak256(abi.encode(hash));
+            if (uint256(hash) < P) {
+                break;
+            }
+        }
+    }
+
     /// @notice Operator function to deliver verifiable random numbers. The
     ///     only entity that has the ability to call this function successfully
     ///     is the holder of the private key of this contract's `vrfPublicKey`
@@ -160,14 +179,12 @@ contract ZKVRF {
         bytes32[] memory publicInputs = new bytes32[](4);
         publicInputs[0] = request.operatorPublicKey;
         // Seed <- keccak(requester, blockhash, nonce)
-        publicInputs[1] = keccak256(
-            abi.encodePacked(
-                request.requester,
-                BlockHashHistorian(blockHashHistorian).getBlockHash(
-                    request.blockNumber
-                ),
-                request.nonce
-            )
+        publicInputs[1] = hashSeedToField(
+            request.requester,
+            BlockHashHistorian(blockHashHistorian).getBlockHash(
+                request.blockNumber
+            ),
+            request.nonce
         );
         publicInputs[2] = signature[0];
         publicInputs[3] = signature[1];
