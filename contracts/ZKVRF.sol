@@ -153,7 +153,7 @@ contract ZKVRF {
         // We take 128 bits from each hash to build a 256-bit entropy
         // source, then feed it into keccak256.
         uint256 entropy = (uint256(signature[0]) << 128) |
-            (uint256(signature[1]) >> 128);
+            (uint256(signature[1]) & (type(uint128).max - 1));
         uint256 derivedRandomness = uint256(keccak256(abi.encode(entropy)));
         randomness[requestId] = derivedRandomness;
 
