@@ -104,6 +104,13 @@ contract ZKVRF {
         }
     }
 
+    /// @notice Request randomness from an operator identified by their PK
+    /// @param operatorPublicKey The operator's PK
+    /// @param minBlockConfirmations The operator will not be able to fulfill
+    ///     the randomness request until at least this many blocks has been
+    ///     confirmed since the request.
+    /// @param callbackGasLimit The gas limit of the callback that delivers
+    ///     the randomness.
     function requestRandomness(
         bytes32 operatorPublicKey,
         uint16 minBlockConfirmations,
@@ -135,19 +142,14 @@ contract ZKVRF {
         );
     }
 
-    /// @notice Repeatedly hash a VRF seed until it lies within the BN254 field prime
+    /// @notice Repeatedly hash a VRF seed until it lies within the BN254 field
+    ///     prime
     function hashSeedToField(
         address requester,
         bytes32 blockHash,
         uint256 nonce
-    ) public pure returns (bytes32 hash) {
-        hash = keccak256(abi.encode(requester, blockHash, nonce));
-        for (;;) {
-            hash = keccak256(abi.encode(hash));
-            if (uint256(hash) < P) {
-                break;
-            }
-        }
+    ) public view returns (bytes32 hash) {
+        return hashToField(abi.encode(requester, blockHash, nonce));
     }
 
     /// @notice Operator function to deliver verifiable random numbers. The
@@ -223,5 +225,79 @@ contract ZKVRF {
             request.nonce,
             derivedRandomness
         );
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// hash_to_field /////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    /// @notice Division, rounding up
+    function ceilDiv(uint256 a, uint256 b) internal pure returns (uint256) {
+        return (a + b - 1) / b;
+    }
+
+    /// @notice Convert integer to octet stream
+    /// @param value Integer to convert
+    /// @param length Byte-length of integer
+    function i2osp(
+        uint256 value,
+        uint256 length
+    ) internal pure returns (bytes memory) {
+        bytes memory res = new bytes(length);
+        for (int256 i = int256(length) - 1; i >= 0; --i) {
+            res[uint256(i)] = bytes1(uint8(value & 0xff));
+            value >>= 8;
+        }
+        return res;
+    }
+
+    /// @notice Produce uniformly random byte string from `message` using keccak256
+    /// @param message Message to expand
+    /// @param DST Domain separation tag
+    /// @param lenInBytes Length of desired byte string
+    function expandMessageXMD(
+        bytes memory message,
+        bytes memory DST,
+        uint256 lenInBytes
+    ) internal pure returns (bytes memory) {
+        uint256 b_in_bytes = 32;
+        uint256 r_in_bytes = b_in_bytes * 2;
+        uint256 ell = ceilDiv(lenInBytes, b_in_bytes);
+        require(ell <= 255, "Invalid xmd length");
+        bytes memory DST_prime = abi.encodePacked(DST, i2osp(DST.length, 1)); // CORRECT
+        // ---------------------------------------
+        bytes memory Z_pad = i2osp(0, r_in_bytes);
+        bytes memory l_i_b_str = i2osp(lenInBytes, 2);
+        bytes32[] memory b = new bytes32[](ell + 1);
+        bytes32 b_0 = keccak256(
+            abi.encodePacked(Z_pad, message, l_i_b_str, i2osp(0, 1), DST_prime)
+        );
+        b[0] = keccak256(abi.encodePacked(b_0, i2osp(1, 1), DST_prime));
+        for (uint256 i = 1; i <= ell; ++i) {
+            b[i] = keccak256(
+                abi.encodePacked(b_0 ^ b[i - 1], i2osp(i + 1, 1), DST_prime)
+            );
+        }
+        // ---------------------------------------
+        bytes memory pseudo_random_bytes = abi.encodePacked(b[0]);
+        for (
+            uint256 i = 1;
+            i < lenInBytes / 32 /** each b[i] is bytes32 */;
+            ++i
+        ) {
+            pseudo_random_bytes = abi.encodePacked(pseudo_random_bytes, b[i]);
+        }
+        return pseudo_random_bytes;
+    }
+
+    /// @notice Hash an arbitrary `message` to BN254 field
+    /// @param message Message to hash
+    function hashToField(bytes memory message) internal view returns (bytes32) {
+        bytes memory pseudo_random_bytes = expandMessageXMD(
+            message,
+            "ZKVRF_SIG_HMACPOSEIDON_XMD:KECCAK-256_SSWU_RO_NUL_",
+            32
+        );
+        return bytes32(uint256(bytes32(pseudo_random_bytes)) % P);
     }
 }
