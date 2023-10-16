@@ -14,10 +14,10 @@ import {
 import circuit from '../circuits/target/zkvrf_pkc_scheme.json'
 // @ts-ignore
 import { buildPoseidonReference } from 'circomlibjs'
-import { randomUUID } from 'node:crypto'
-import { writeFileSync, readFileSync } from 'fs'
-import * as path from 'path'
-import { execSync } from 'child_process'
+// import { randomUUID } from 'node:crypto'
+// import { writeFileSync, readFileSync } from 'fs'
+// import * as path from 'path'
+// import { execSync } from 'child_process'
 
 type PoseidonHashFn = (inputs: any[]) => Uint8Array
 type Poseidon = PoseidonHashFn & {
@@ -30,8 +30,8 @@ type Poseidon = PoseidonHashFn & {
 async function initNoir() {
     const { Noir } = await import('@noir-lang/noir_js')
     const { BarretenbergBackend } = await import('@noir-lang/backend_barretenberg')
-    const backend = new BarretenbergBackend(circuit)
-    const noir = new Noir(circuit, backend)
+    const backend = new BarretenbergBackend(circuit as any)
+    const noir = new Noir(circuit as any, backend)
     return {
         backend,
         noir,
