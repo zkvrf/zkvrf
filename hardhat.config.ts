@@ -22,20 +22,20 @@ const config: HardhatUserConfig = {
     },
     networks: {
         hardhat: {
-            chainId: 1,
+            chainId: 534351,
             forking: {
                 enabled: true,
-                url: process.env.MAINNET_URL as string,
-                blockNumber: 18292802,
+                url: process.env.SCROLL_SEPOLIA_URL as string,
+                blockNumber: 1624600,
             },
-            blockGasLimit: 155_000_000,
+            blockGasLimit: 10_000_000,
             accounts: {
                 count: 10,
             },
         },
-        mainnet: {
-            chainId: 1,
-            url: process.env.MAINNET_URL as string,
+        scrollSepolia: {
+            chainId: 534351,
+            url: process.env.SCROLL_SEPOLIA_URL as string,
             accounts: [process.env.MAINNET_PK as string],
         },
     },
@@ -67,7 +67,7 @@ const config: HardhatUserConfig = {
         runOnCompile: true,
         clear: true,
         flat: true,
-        only: [],
+        only: ['ZKVRF', 'BlockHashHistorian'],
         except: ['test/*'],
     },
 }

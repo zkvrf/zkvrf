@@ -20,42 +20,12 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "uint256",
-        "name": "requestId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
         "internalType": "bytes32",
         "name": "operatorPublicKey",
         "type": "bytes32"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "requester",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint16",
-        "name": "minBlockConfirmations",
-        "type": "uint16"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint32",
-        "name": "callbackGasLimit",
-        "type": "uint32"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "nonce",
-        "type": "uint256"
       }
     ],
-    "name": "RandomNumberRequested",
+    "name": "OperatorRegistered",
     "type": "event"
   },
   {
@@ -93,6 +63,49 @@
       }
     ],
     "name": "RandomnessFulfilled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "operatorPublicKey",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "requester",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint16",
+        "name": "minBlockConfirmations",
+        "type": "uint16"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "callbackGasLimit",
+        "type": "uint32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "nonce",
+        "type": "uint256"
+      }
+    ],
+    "name": "RandomnessRequested",
     "type": "event"
   },
   {
@@ -245,6 +258,25 @@
       }
     ],
     "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "operatorPublicKey",
+        "type": "bytes32"
+      }
+    ],
+    "name": "isOperator",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

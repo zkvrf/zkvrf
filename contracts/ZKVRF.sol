@@ -4,10 +4,7 @@ pragma solidity 0.8.19;
 import {Sets} from "./lib/Sets.sol";
 import {UltraVerifier} from "../circuits/contract/zkvrf_pkc_scheme/plonk_vk.sol";
 import {BlockHashHistorian} from "./BlockHashHistorian.sol";
-
-interface IZKVRFCallback {
-    function receiveRandomness(uint256 requestId, uint256 randomness) external;
-}
+import {IZKVRFCallback} from "./interfaces/IZKVRFCallback.sol";
 
 /// @title ZKVRF
 /// @notice A verifiable random function provider that uses a custom public-key
@@ -44,7 +41,7 @@ contract ZKVRF {
     /// @notice Nonces used as part of randomness seeds
     mapping(address requester => uint256) public requestNonces;
 
-    event RandomNumberRequested(
+    event RandomnessRequested(
         uint256 indexed requestId,
         bytes32 indexed operatorPublicKey,
         address indexed requester,
@@ -59,6 +56,7 @@ contract ZKVRF {
         uint256 nonce,
         uint256 randomness
     );
+    event OperatorRegistered(bytes32 indexed operatorPublicKey);
 
     constructor(address verifier_, address blockHashHistorian_) {
         verifier = verifier_;
@@ -66,12 +64,23 @@ contract ZKVRF {
         operators.init();
     }
 
+    /// @notice Register an operator public key (permissionless)
+    /// TODO: Ideally we would require the operator to sign a message here
+    /// TODO: Also operators should be able to deregister
     function registerOperator(bytes32 publicKey) external {
         operators.add(publicKey);
+        emit OperatorRegistered(publicKey);
     }
 
+    /// @notice Get total number of registered operators
     function getOperatorsCount() external view returns (uint256) {
         return operators.size;
+    }
+
+    /// @notice Returns true if public key is indeed registered
+    /// @param operatorPublicKey Operator public key
+    function isOperator(bytes32 operatorPublicKey) public view returns (bool) {
+        return operators.has(operatorPublicKey);
     }
 
     /// @notice Get a paginated list of operators
@@ -100,7 +109,7 @@ contract ZKVRF {
         uint16 minBlockConfirmations,
         uint32 callbackGasLimit
     ) external returns (uint256 requestId) {
-        require(operators.has(operatorPublicKey), "Unknown operator");
+        require(isOperator(operatorPublicKey), "Unknown operator");
 
         requestId = nextRequestId++;
         uint256 nonce = requestNonces[msg.sender]++;
@@ -116,7 +125,7 @@ contract ZKVRF {
             )
         );
 
-        emit RandomNumberRequested(
+        emit RandomnessRequested(
             requestId,
             operatorPublicKey,
             msg.sender,
