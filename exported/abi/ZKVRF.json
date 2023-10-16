@@ -257,7 +257,7 @@
         "type": "bytes32"
       }
     ],
-    "stateMutability": "pure",
+    "stateMutability": "view",
     "type": "function"
   },
   {
