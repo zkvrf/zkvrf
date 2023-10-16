@@ -160,32 +160,15 @@ describe('ZKVRF', async () => {
                 ).padStart(64, '0'),
         ] as [string, string]
 
-        const inputs = {
+        const { proof } = await generateWitnessAndProof({
             private_key: operatorPrivateKey,
             public_key: operatorPublicKey,
             message_hash: messageHash,
-        }
-        // TODO: Use this again when bb.js is fixed
-        // const proof = await generateWitnessAndProof(inputs)
-
-        // Temp: use nargo prover w/native backend
-        const proverTomlPath = `/tmp/${randomUUID()}.toml`
-        const proverTomlContent = Object.entries(inputs)
-            .map(([key, value]) => `${key}="${value}"`)
-            .join('\n')
-        writeFileSync(proverTomlPath, proverTomlContent)
-        const verifierTomlPath = `/tmp/${randomUUID()}.toml`
-        const proofStartTimestamp = performance.now()
-        execSync(`nargo prove -p ${proverTomlPath} -v ${verifierTomlPath}`, {
-            cwd: path.resolve(__dirname, '../circuits'),
         })
-        const proofEndTimestamp = performance.now()
-        console.log(`Proving took ${proofEndTimestamp - proofStartTimestamp} ms`)
-        const proof =
-            '0x' +
-            readFileSync(path.resolve(__dirname, '../circuits/proofs/zkvrf_pkc_scheme.proof'), {
-                encoding: 'utf-8',
-            })
+
+        // await verifier.verify(proof, [operatorPublicKey, messageHash, signature[0], signature[1]], {
+        //     gasLimit: 10_000_000,
+        // })
 
         // Fulfill randomness with ZKP
         await zkvrf.fulfillRandomness(
@@ -200,6 +183,9 @@ describe('ZKVRF', async () => {
             },
             signature,
             proof,
+            {
+                gasLimit: 10_000_000,
+            },
         )
     })
 })

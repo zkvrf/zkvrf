@@ -9,8 +9,8 @@
   "author": "Kevin Charm <k@fairy.dev>",
   "license": "UNLICENSED",
   "devDependencies": {
-    "@noir-lang/backend_barretenberg": "^0.7.10",
-    "@noir-lang/noir_js": "^0.16.0",
+    "@noir-lang/backend_barretenberg": "0.7.10-37315f8.nightly",
+    "@noir-lang/noir_js": "0.16.0-37315f8.nightly",
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
     "@nomicfoundation/hardhat-ethers": "^3.0.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
