@@ -104,6 +104,12 @@ contract ZKVRF {
         }
     }
 
+    /// @notice Request randomness from an operator
+    /// @param operatorPublicKey Public key identifying the operator
+    /// @param minBlockConfirmations Minimum amount of blocks that must be
+    ///     confirmed after the request before the operator may fulfill the
+    ///     request.
+    /// @param callbackGasLimit Gas limit of callback delivering the randomness
     function requestRandomness(
         bytes32 operatorPublicKey,
         uint16 minBlockConfirmations,
@@ -154,6 +160,8 @@ contract ZKVRF {
     ///     only entity that has the ability to call this function successfully
     ///     is the holder of the private key of this contract's `vrfPublicKey`
     /// @param requestId Request ID to fulfill
+    /// @param request VRF request details, will be checked against commitment
+    /// @param signature "Signature" produced by the custom PK scheme
     /// @param snarkProof SNARK proof of valid signature generation
     function fulfillRandomness(
         uint256 requestId,
