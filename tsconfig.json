@@ -2,12 +2,19 @@
   "compilerOptions": {
     "noEmit": true,
     "target": "es2020",
-    "module": "commonjs",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "strict": true,
     "esModuleInterop": true,
     "outDir": "dist",
     "declaration": true,
     "resolveJsonModule": true
   },
-  "include": ["./scripts", "./test", "./typechain-types", "./types"]
+  "include": [
+    "./hardhat.config.ts",
+    "./scripts",
+    "./test",
+    "./typechain-types",
+    "./types"
+  ]
 }
