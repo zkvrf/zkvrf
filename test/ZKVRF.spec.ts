@@ -1,3 +1,4 @@
+import assert from 'assert'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
@@ -35,7 +36,9 @@ async function initNoir() {
 
 async function generateWitnessAndProof(inputs: any) {
     const { noir } = await initNoir()
-    return noir.generateFinalProof(inputs)
+    const proof = await noir.generateFinalProof(inputs)
+    assert(await noir.verifyFinalProof(proof), 'Could not verify proof offchain')
+    return proof
 }
 
 const mockZkvrfSig = {
