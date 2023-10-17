@@ -8,7 +8,7 @@ import {
     UltraVerifier,
     UltraVerifier__factory,
     ZKVRF__factory,
-    ZKVRFConsumer__factory,
+    ZKVRFGlobalConsumer__factory,
 } from '../typechain-types'
 // If missing: go to `circuits` dir and run `nargo compile`
 import circuit from '../circuits/target/zkvrf_pkc_scheme.json'
@@ -73,7 +73,9 @@ describe('ZKVRF', async () => {
             await blockHashHistorian.getAddress(),
         )
         // Deploy "mock" VRF consumer
-        const consumer = await new ZKVRFConsumer__factory(bob).deploy(await zkvrf.getAddress())
+        const consumer = await new ZKVRFGlobalConsumer__factory(bob).deploy(
+            await zkvrf.getAddress(),
+        )
 
         // Register operator
         await zkvrf.registerOperator(mockZkvrfSig.publicKey)
