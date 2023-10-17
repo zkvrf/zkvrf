@@ -93,14 +93,20 @@ contract ZKVRF {
         uint256 maxPageSize
     ) external view returns (bytes32[] memory out) {
         Sets.Set storage set = operators;
-        uint256 len = set.size;
-
-        uint256 pageSize = maxPageSize > len ? len : maxPageSize;
-        out = new bytes32[](pageSize);
-        bytes32 element = lastOperator == 0 ? set.tail() : lastOperator;
-        for (uint256 i = 0; i < pageSize; ++i) {
+        out = new bytes32[](maxPageSize);
+        bytes32 element = lastOperator == 0
+            ? set.tail()
+            : set.prev(lastOperator);
+        uint256 i;
+        for (; i < maxPageSize; ++i) {
+            if (element == bytes32(uint256(1))) {
+                break;
+            }
             out[i] = element;
             element = set.prev(element);
+        }
+        assembly {
+            mstore(out, i)
         }
     }
 

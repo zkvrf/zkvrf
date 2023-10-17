@@ -162,11 +162,14 @@ describe('ZKVRF', async () => {
                 ).padStart(64, '0'),
         ] as [string, string]
 
+        const proofStartedAt = performance.now()
         const { proof } = await generateWitnessAndProof({
             private_key: operatorPrivateKey,
             public_key: operatorPublicKey,
             message_hash: messageHash,
         })
+        const proofCompletedAt = performance.now()
+        console.log(`Proof took: ${proofCompletedAt - proofStartedAt} ms`)
 
         // await verifier.verify(proof, [operatorPublicKey, messageHash, signature[0], signature[1]], {
         //     gasLimit: 10_000_000,
@@ -188,6 +191,32 @@ describe('ZKVRF', async () => {
             {
                 gasLimit: 10_000_000,
             },
+        )
+    })
+
+    it('should return paginated result of operators', async () => {
+        const zkvrf = await new ZKVRF__factory(deployer).deploy(
+            await verifier.getAddress(),
+            await blockHashHistorian.getAddress(),
+        )
+        const operatorPubKeys = Array(10)
+            .fill(0)
+            .map((_) => ethers.hexlify(ethers.randomBytes(32)))
+        for (const pk of operatorPubKeys) {
+            await zkvrf.registerOperator(pk)
+        }
+        const pubKeysReversed = operatorPubKeys.slice().reverse()
+        expect(await zkvrf.getOperatorsCount()).to.eq(10)
+        expect(await zkvrf.getOperators(ethers.ZeroHash, 1)).to.deep.eq(pubKeysReversed.slice(0, 1))
+        expect(await zkvrf.getOperators(ethers.ZeroHash, 5)).to.deep.eq(pubKeysReversed.slice(0, 5))
+        expect(await zkvrf.getOperators(pubKeysReversed[1], 1)).to.deep.eq(
+            pubKeysReversed.slice(2, 3),
+        )
+        expect(await zkvrf.getOperators(pubKeysReversed[4], 5)).to.deep.eq(
+            pubKeysReversed.slice(5, 10),
+        )
+        expect(await zkvrf.getOperators(pubKeysReversed[4], 10)).to.deep.eq(
+            pubKeysReversed.slice(5),
         )
     })
 })
