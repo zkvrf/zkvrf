@@ -1,7 +1,12 @@
 import { ethers } from 'hardhat'
-import { ZKVRFGlobalConsumer__factory, ZKVRF__factory } from '../typechain-types'
+import {
+    BlockHashHistorian__factory,
+    UltraVerifier__factory,
+    ZKVRFGlobalConsumer__factory,
+    ZKVRF__factory,
+} from '../typechain-types'
 import { EXAMPLE_OPERATOR_PRIV_KEY, EXAMPLE_OPERATOR_PUB_KEY } from './constants'
-import { getPoseidon } from '../test/poseidon'
+import { poseidon } from '../test/poseidon'
 import { generateWitnessAndProof } from '../test/generateWitnessAndProof'
 
 const ZKVRF_ADDRESS = '0xFBF562a98aB8584178efDcFd09755FF9A1e7E3a2'
@@ -18,7 +23,7 @@ async function deploy() {
     // Do example request & response
     const requestRandomnessTx = await consumer
         .requestRandomness(EXAMPLE_OPERATOR_PUB_KEY, 1, 500_000)
-        .then((tx) => tx.wait(2))
+        .then((tx) => tx.wait(5))
     const randomnessRequestedEvent = requestRandomnessTx!.logs.find(
         (log) =>
             ZKVRF__factory.createInterface().parseLog(log as any)?.name === 'RandomnessRequested',
@@ -36,30 +41,34 @@ async function deploy() {
         randomnessRequestedEvent!.topics,
     )
 
+    console.log(
+        `RandomnessRequested(${_requestId}, ${_operatorPublicKey}, ${_requester}, ${_minBlockConfirmations}, ${_callbackGasLimit}, ${_nonce})`,
+    )
+
     // Fulfill with ZKP
     const operatorPublicKey = EXAMPLE_OPERATOR_PUB_KEY
     const operatorPrivateKey = EXAMPLE_OPERATOR_PRIV_KEY
     const zkvrf = await ZKVRF__factory.connect(ZKVRF_ADDRESS, deployer).waitForDeployment()
+    const onchainBlockhash = await BlockHashHistorian__factory.connect(
+        await zkvrf.blockHashHistorian(),
+        deployer,
+    ).getBlockHash(requestRandomnessTx!.blockNumber)
+    console.log(`Onchain blockhash: ${onchainBlockhash}`)
+
     const messageHash = await zkvrf.hashSeedToField(
         _requester,
-        requestRandomnessTx!.blockHash,
+        onchainBlockhash, // NB: Scroll blockhash is BROKEN // requestRandomnessTx!.blockHash
         _nonce,
     )
-    const poseidon = await getPoseidon()
+    console.log(`Message hash: ${messageHash}`)
+
     // hash_2([private_key, hash_3([private_key, message_hash, 0])]),
     // hash_2([private_key, hash_3([private_key, message_hash, 1])])
     const signature = [
-        '0x' +
-            poseidon.F.toString(
-                poseidon([operatorPrivateKey, poseidon([operatorPrivateKey, messageHash, 0])]),
-                16,
-            ).padStart(64, '0'),
-        '0x' +
-            poseidon.F.toString(
-                poseidon([operatorPrivateKey, poseidon([operatorPrivateKey, messageHash, 1])]),
-                16,
-            ).padStart(64, '0'),
+        await poseidon([operatorPrivateKey, await poseidon([operatorPrivateKey, messageHash, 0])]),
+        await poseidon([operatorPrivateKey, await poseidon([operatorPrivateKey, messageHash, 1])]),
     ] as [string, string]
+    console.log(`Signature: ${signature}`)
 
     const proofStartedAt = performance.now()
     const { proof } = await generateWitnessAndProof({
@@ -68,10 +77,24 @@ async function deploy() {
         message_hash: messageHash,
     })
     const proofCompletedAt = performance.now()
-
     console.log(`Proof took: ${proofCompletedAt - proofStartedAt} ms`)
+
+    // Try static - this is a sanity check only
+    const verifier = await UltraVerifier__factory.connect(
+        await zkvrf.verifier(),
+        deployer,
+    ).waitForDeployment()
+    const isValid = await verifier.verify(
+        proof,
+        [operatorPublicKey, messageHash, signature[0], signature[1]],
+        {
+            gasLimit: 10_000_000,
+        },
+    )
+    console.log(`Verifier answer: ${isValid}`)
+
     // Fulfill randomness with ZKP
-    await zkvrf
+    const tx = await zkvrf
         .fulfillRandomness(
             _requestId,
             {
@@ -84,11 +107,9 @@ async function deploy() {
             },
             signature,
             proof,
-            {
-                gasLimit: 1_000_000,
-            },
         )
         .then((tx) => tx.wait(1))
+    console.log(`Fulfill tx: ${tx?.hash}`)
 }
 
 deploy()

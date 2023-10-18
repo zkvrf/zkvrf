@@ -5,9 +5,6 @@ const ZKVRF_ADDRESS = '0xFBF562a98aB8584178efDcFd09755FF9A1e7E3a2'
 
 async function deploy() {
     const [deployer] = await ethers.getSigners()
-    ///////////////////////////////////////////////////////////////////////////
-    /// ZKVRFGlobalConsumer ///////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
 
     const consumer = await new ZKVRFGlobalConsumer__factory(deployer)
         .deploy(ZKVRF_ADDRESS)
