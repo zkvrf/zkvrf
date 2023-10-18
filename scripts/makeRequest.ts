@@ -10,7 +10,7 @@ import { poseidon } from '../test/poseidon'
 import { generateWitnessAndProof } from '../test/generateWitnessAndProof'
 
 const ZKVRF_ADDRESS = '0xFBF562a98aB8584178efDcFd09755FF9A1e7E3a2'
-const ZKVRF_GLOBAL_CONSUMER = '0xdA7b125147Eb16c27Ce215b15b6F4077B3411deA'
+const ZKVRF_GLOBAL_CONSUMER = '0xE537f0394C84bbA5536400aD0f2Fc9Bb7A46791d'
 
 async function deploy() {
     const [deployer] = await ethers.getSigners()
