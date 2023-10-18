@@ -43,6 +43,7 @@ contract ZKVRFGlobalConsumer is IZKVRFCallback {
     /// @notice Callback to receive the randomness fulfilment; the whole point
     ///     of this contract
     function receiveRandomness(uint256 requestId, uint256 randomness) external {
+        require(msg.sender == zkvrf, "Not authorised");
         require(fulfilments[requestId] == 0, "Already fulfilled");
         fulfilments[requestId] = randomness;
         emit ConsumerRandomnessReceived(requestId, randomness);
