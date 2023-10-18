@@ -1,4 +1,3 @@
-import assert from 'assert'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
@@ -10,40 +9,8 @@ import {
     ZKVRF__factory,
     ZKVRFGlobalConsumer__factory,
 } from '../typechain-types'
-// If missing: go to `circuits` dir and run `nargo compile`
-import circuit from '../circuits/target/zkvrf_pkc_scheme.json'
-// @ts-ignore
-import { buildPoseidonReference } from 'circomlibjs'
-// import { randomUUID } from 'node:crypto'
-// import { writeFileSync, readFileSync } from 'fs'
-// import * as path from 'path'
-// import { execSync } from 'child_process'
-
-type PoseidonHashFn = (inputs: any[]) => Uint8Array
-type Poseidon = PoseidonHashFn & {
-    F: {
-        e: (hex: string) => any
-        toString: (input: any, radix: number) => string
-    }
-}
-
-async function initNoir() {
-    const { Noir } = await import('@noir-lang/noir_js')
-    const { BarretenbergBackend } = await import('@noir-lang/backend_barretenberg')
-    const backend = new BarretenbergBackend(circuit as any)
-    const noir = new Noir(circuit as any, backend)
-    return {
-        backend,
-        noir,
-    }
-}
-
-async function generateWitnessAndProof(inputs: any) {
-    const { noir } = await initNoir()
-    const proof = await noir.generateFinalProof(inputs)
-    assert(await noir.verifyFinalProof(proof), 'Could not verify proof offchain')
-    return proof
-}
+import { generateWitnessAndProof } from './generateWitnessAndProof'
+import { getPoseidon } from './poseidon'
 
 const mockZkvrfSig = {
     privateKey: '0x01c8bdf6686d4c8ba09db5f15ffee3c470a5e0ff54d6fbac3a548f9a666977',
@@ -146,7 +113,7 @@ describe('ZKVRF', async () => {
             _nonce,
         )
 
-        const poseidon: Poseidon = await buildPoseidonReference()
+        const poseidon = await getPoseidon()
         // hash_2([private_key, hash_3([private_key, message_hash, 0])]),
         // hash_2([private_key, hash_3([private_key, message_hash, 1])])
         const signature = [
