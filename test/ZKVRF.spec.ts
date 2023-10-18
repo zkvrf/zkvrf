@@ -10,7 +10,7 @@ import {
     ZKVRFGlobalConsumer__factory,
 } from '../typechain-types'
 import { generateWitnessAndProof } from './generateWitnessAndProof'
-import { getPoseidon } from './poseidon'
+import { poseidon } from './poseidon'
 
 const mockZkvrfSig = {
     privateKey: '0x01c8bdf6686d4c8ba09db5f15ffee3c470a5e0ff54d6fbac3a548f9a666977',
@@ -113,20 +113,17 @@ describe('ZKVRF', async () => {
             _nonce,
         )
 
-        const poseidon = await getPoseidon()
         // hash_2([private_key, hash_3([private_key, message_hash, 0])]),
         // hash_2([private_key, hash_3([private_key, message_hash, 1])])
         const signature = [
-            '0x' +
-                poseidon.F.toString(
-                    poseidon([operatorPrivateKey, poseidon([operatorPrivateKey, messageHash, 0])]),
-                    16,
-                ).padStart(64, '0'),
-            '0x' +
-                poseidon.F.toString(
-                    poseidon([operatorPrivateKey, poseidon([operatorPrivateKey, messageHash, 1])]),
-                    16,
-                ).padStart(64, '0'),
+            await poseidon([
+                operatorPrivateKey,
+                await poseidon([operatorPrivateKey, messageHash, 0]),
+            ]),
+            await poseidon([
+                operatorPrivateKey,
+                await poseidon([operatorPrivateKey, messageHash, 1]),
+            ]),
         ] as [string, string]
 
         const proofStartedAt = performance.now()
